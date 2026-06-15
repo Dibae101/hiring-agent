@@ -17,7 +17,8 @@ DEFAULT_MODEL_NAME = "gemma3:4b"
 DEFAULT_PROVIDER = ModelProvider.OLLAMA
 
 # Get model and provider from environment or use defaults
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", DEFAULT_MODEL_NAME)
+# Support both DEFAULT_MODEL and LLM_MODEL for the model name.
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL") or os.getenv("LLM_MODEL", DEFAULT_MODEL_NAME)
 PROVIDER = os.getenv("LLM_PROVIDER", DEFAULT_PROVIDER.value)
 
 # Validate provider
@@ -65,3 +66,7 @@ MODEL_PROVIDER_MAPPING = {
 
 # Get API keys from environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+# OpenAI-compatible provider configuration (used for Bedrock mantle, OpenAI, etc.)
+OPENAI_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "")

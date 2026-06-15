@@ -8,6 +8,10 @@ cache/
 resume_evaluations.csv
 greenhouse_resumes/*
 
+# Personal resume files
+Khanal_Dibya_2026.pdf
+*_resume.pdf
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

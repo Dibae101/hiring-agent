@@ -4,8 +4,14 @@ Utility functions for LLM providers.
 
 import logging
 from typing import Any, Dict, Optional
-from models import ModelProvider, OllamaProvider, GeminiProvider
-from prompt import MODEL_PROVIDER_MAPPING, GEMINI_API_KEY
+from models import ModelProvider, OllamaProvider, GeminiProvider, OpenAIProvider
+from prompt import (
+    MODEL_PROVIDER_MAPPING,
+    GEMINI_API_KEY,
+    PROVIDER,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +55,24 @@ def initialize_llm_provider(model_name: str) -> Any:
     """
     # Default to Ollama provider
     provider = OllamaProvider()
+
+    # The explicit LLM_PROVIDER env var takes precedence. This is required for
+    # custom model names (e.g. Bedrock mantle) that aren't in MODEL_PROVIDER_MAPPING.
+    if PROVIDER == ModelProvider.OPENAI.value:
+        if not OPENAI_API_KEY:
+            logger.warning("⚠️ OpenAI/LLM API key not found. Falling back to Ollama.")
+        else:
+            logger.info(
+                f"🔄 Using OpenAI-compatible provider with model {model_name}"
+                + (f" at {OPENAI_BASE_URL}" if OPENAI_BASE_URL else "")
+            )
+            return OpenAIProvider(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+        return provider
+
     # If using Gemini and API key is available, use Gemini provider
     model_provider = MODEL_PROVIDER_MAPPING.get(model_name, ModelProvider.OLLAMA)
+    if PROVIDER == ModelProvider.GEMINI.value:
+        model_provider = ModelProvider.GEMINI
     if model_provider == ModelProvider.GEMINI:
         if not GEMINI_API_KEY:
             logger.warning("⚠️ Gemini API key not found. Falling back to Ollama.")

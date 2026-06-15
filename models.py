@@ -8,6 +8,7 @@ class ModelProvider(Enum):
 
     OLLAMA = "ollama"
     GEMINI = "gemini"
+    OPENAI = "openai"
 
 
 @runtime_checkable
@@ -308,6 +309,51 @@ class OllamaProvider:
             chat_params["format"] = kwargs["format"]
 
         return self.client.chat(**chat_params)
+
+
+class OpenAIProvider:
+    """OpenAI-compatible provider (works with OpenAI, Bedrock mantle, etc.)."""
+
+    def __init__(self, api_key: str, base_url: str = None):
+        from openai import OpenAI
+
+        self.client = OpenAI(api_key=api_key, base_url=base_url or None)
+
+    def chat(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        options: Dict[str, Any] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Send a chat request to an OpenAI-compatible endpoint."""
+        options = options or {}
+
+        request_params = {
+            "model": model,
+            "messages": messages,
+        }
+
+        if "temperature" in options:
+            request_params["temperature"] = options["temperature"]
+        if "top_p" in options:
+            request_params["top_p"] = options["top_p"]
+
+        # The evaluator passes a JSON schema via `format` for structured output.
+        # OpenAI-compatible endpoints use response_format; json_object is the most
+        # widely supported mode and the prompt already specifies the exact schema.
+        if kwargs.get("format"):
+            request_params["response_format"] = {"type": "json_object"}
+
+        response = self.client.chat.completions.create(**request_params)
+
+        # Convert to the Ollama-like format the rest of the code expects.
+        return {
+            "message": {
+                "role": "assistant",
+                "content": response.choices[0].message.content,
+            }
+        }
 
 
 class GeminiProvider:
